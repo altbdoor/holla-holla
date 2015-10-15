@@ -5,28 +5,28 @@
 		valTo = d.getElementById('currency-value-to'),
 		
 		http = new XMLHttpRequest(),
-		parser = new DOMParser();
+		
+		yqlUrl = 'http://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml',
+		yqlQuery = 'SELECT * FROM xml WHERE url="' + yqlUrl + '"';
 	
-	http.open('GET', 'http://crossorigin.me/http://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml', true);
+	http.open('GET', 'http://query.yahooapis.com/v1/public/yql?format=xml&q=' + encodeURIComponent(yqlQuery), true);
 	http.onload = function () {
 		if (this.status >= 200 && this.status < 400) {
-			var doc = parser.parseFromString(this.response, 'text/xml'),
-				entries = doc.getElementsByTagName('Cube');
+			var parser = new DOMParser(),
+				doc = parser.parseFromString(this.response, 'text/xml'),
+				entries = doc.querySelectorAll('Cube[currency][rate]');
 			
-			for (var i=0; i<entries.length; i++) {
-				var currency = entries[i].getAttribute('currency'),
-					rate = entries[i].getAttribute('rate');
+			Array.prototype.forEach.call(entries, function (item) {
+				var currency = item.getAttribute('currency'),
+					rate = item.getAttribute('rate'),
+					option = d.createElement('option');
 				
-				if (currency && rate) {
-					var option = d.createElement('option');
-					
-					option.innerHTML = currency;
-					option.value = rate;
-					
-					currencyFrom.appendChild(option);
-					currencyTo.appendChild(option.cloneNode(true));
-				}
-			}
+				option.innerHTML = currency;
+				option.value = rate;
+				
+				currencyFrom.appendChild(option);
+				currencyTo.appendChild(option.cloneNode(true));
+			});
 		}
 	};
 	http.send();
@@ -48,6 +48,5 @@
 	
 	currencyFrom.onchange = 
 	currencyTo.onchange =
-	valFrom.onkeyup =
-	valTo.onkeyup = onChange;
+	valFrom.onkeyup = onChange;
 })(document, window);
